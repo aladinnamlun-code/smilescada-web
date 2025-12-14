@@ -6,20 +6,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="logo.png">
-    <title>Smile Scada Online</title>
-    <!-- Thư viện MQTT -->
+    <title>Smile Scada</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 5px; }
+        body { font-family: -apple-system, sans-serif; background: #f2f2f7; margin: 0; padding: 10px; display: none; /* Ẩn trước khi nhập pass */ }
+        h2 { text-align: center; color: #0056b3; margin: 10px 0 5px 0; }
         #status { text-align: center; font-size: 12px; color: #f39c12; margin-bottom: 15px; }
-        
-        .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .header { display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 10px; }
+        .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header { display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
         .dot { width: 12px; height: 12px; background: #ccc; border-radius: 50%; margin-right: 10px; }
-        .dot.active { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+        .dot.active { background: #34c759; box-shadow: 0 0 8px #34c759; }
         .title { font-weight: bold; font-size: 18px; color: #333; }
-        
         .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; }
         .label { color: #666; }
         .val { font-weight: bold; color: #222; }
@@ -28,77 +25,111 @@
 </head>
 <body>
 
+    <!-- GIAO DIỆN CHÍNH -->
     <h2>SMILE SCADA</h2>
     <div id="status">Đang kết nối Cloud...</div>
 
     <!-- TỔ MÁY H1 -->
     <div class="card">
-        <div class="header">
-            <div id="led1" class="dot"></div>
-            <div class="title">TỔ MÁY H1</div>
-        </div>
-        <div class="row"><span class="label">Công suất P</span> <span><span id="p1" class="val">--</span> <span class="unit">MW</span></span></div>
-        <div class="row"><span class="label">Công suất Q</span> <span><span id="q1" class="val">--</span> <span class="unit">MVar</span></span></div>
-        <div class="row"><span class="label">Điện áp U</span> <span><span id="u1" class="val">--</span> <span class="unit">kV</span></span></div>
-        <div class="row"><span class="label">Dòng điện I</span> <span><span id="i1" class="val">--</span> <span class="unit">A</span></span></div>
+        <div class="header"><div id="led1" class="dot"></div><div class="title">TỔ MÁY H1</div></div>
+        <div class="row"><span class="label">P</span> <span><span id="p1" class="val">--</span> <span class="unit">MW</span></span></div>
+        <div class="row"><span class="label">Q</span> <span><span id="q1" class="val">--</span> <span class="unit">MVar</span></span></div>
+        <div class="row"><span class="label">U</span> <span><span id="u1" class="val">--</span> <span class="unit">kV</span></span></div>
+        <div class="row"><span class="label">I</span> <span><span id="i1" class="val">--</span> <span class="unit">A</span></span></div>
+    </div>
+
+    <!-- TỔ MÁY H2 -->
+    <div class="card">
+        <div class="header"><div id="led2" class="dot"></div><div class="title">TỔ MÁY H2</div></div>
+        <div class="row"><span class="label">P</span> <span><span id="p2" class="val">--</span> <span class="unit">MW</span></span></div>
+        <div class="row"><span class="label">Q</span> <span><span id="q2" class="val">--</span> <span class="unit">MVar</span></span></div>
+        <div class="row"><span class="label">U</span> <span><span id="u2" class="val">--</span> <span class="unit">kV</span></span></div>
+        <div class="row"><span class="label">I</span> <span><span id="i2" class="val">--</span> <span class="unit">A</span></span></div>
+    </div>
+
+    <!-- TỔ MÁY H3 -->
+    <div class="card">
+        <div class="header"><div id="led3" class="dot"></div><div class="title">TỔ MÁY H3</div></div>
+        <div class="row"><span class="label">P</span> <span><span id="p3" class="val">--</span> <span class="unit">MW</span></span></div>
+        <div class="row"><span class="label">Q</span> <span><span id="q3" class="val">--</span> <span class="unit">MVar</span></span></div>
+        <div class="row"><span class="label">U</span> <span><span id="u3" class="val">--</span> <span class="unit">kV</span></span></div>
+        <div class="row"><span class="label">I</span> <span><span id="i3" class="val">--</span> <span class="unit">A</span></span></div>
     </div>
 
     <!-- THỦY VĂN -->
     <div class="card">
-        <div class="header">
-            <div class="title" style="color:#007AFF">THỦY VĂN</div>
-        </div>
+        <div class="header"><div class="title" style="color:#007AFF">THỦY VĂN</div></div>
         <div class="row"><span class="label">Thượng lưu</span> <span><span id="up" class="val">--</span> <span class="unit">m</span></span></div>
         <div class="row"><span class="label">Hạ lưu</span> <span><span id="down" class="val">--</span> <span class="unit">m</span></span></div>
     </div>
 
     <script>
-        // KẾT NỐI EMQX.IO QUA WEBSOCKET (WSS - Cổng 8084)
-        // Lưu ý: Cổng 8083 là ws (không bảo mật), 8084 là wss (bảo mật SSL - khuyên dùng)
-        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt')
+        // --- CẤU HÌNH MẬT KHẨU ---
+        const PASSWORD = "@smile"; // Đặt mật khẩu tại đây
 
-        client.on('connect', () => {
-            console.log('Connected to EMQX')
-            document.getElementById('status').innerText = "● Đã kết nối trực tuyến"
-            document.getElementById('status').style.color = "green"
-            
-            // Đăng ký nhận tin
-            client.subscribe('H1dataAnalog')
-            client.subscribe('TailgatedataAnalog')
-        })
-
-        client.on('message', (topic, message) => {
-            const parts = message.toString().split(',')
-            
-            // Hàm xử lý số liệu (Giống logic C#)
-            const getVal = (idx, scale) => {
-                if (idx >= parts.length) return 0
-                let v = parseFloat(parts[idx])
-                if (v > 32767) v -= 65536 // Xử lý số âm
-                return (v / scale).toFixed(2)
+        // Kiểm tra mật khẩu (Lưu vào LocalStorage để không phải nhập lại lần sau)
+        const savedPass = localStorage.getItem("scada_pass");
+        if (savedPass === PASSWORD) {
+            document.body.style.display = "block";
+            startMqtt();
+        } else {
+            const input = prompt("Nhập mật khẩu truy cập:");
+            if (input === PASSWORD) {
+                localStorage.setItem("scada_pass", PASSWORD);
+                document.body.style.display = "block";
+                startMqtt();
+            } else {
+                alert("Sai mật khẩu!");
+                window.location.reload(); // Load lại để hỏi tiếp
             }
+        }
 
-            if (topic === 'H1dataAnalog') {
-                const p = getVal(0, 1000)
-                const q = getVal(1, 1000)
-                const u = getVal(10, 100)
-                const i = getVal(5, 1)
+        function startMqtt() {
+            const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
-                document.getElementById('p1').innerText = p
-                document.getElementById('q1').innerText = q
-                document.getElementById('u1').innerText = u
-                document.getElementById('i1').innerText = i
+            client.on('connect', () => {
+                document.getElementById('status').innerText = "● Trực tuyến";
+                document.getElementById('status').style.color = "green";
+                client.subscribe('H1dataAnalog');
+                client.subscribe('H2dataAnalog');
+                client.subscribe('H3dataAnalog');
+                client.subscribe('TailgatedataAnalog');
+            });
 
-                // Logic đèn báo trạng thái (U > 1kV)
-                if (parseFloat(u) > 1.0) document.getElementById('led1').classList.add('active')
-                else document.getElementById('led1').classList.remove('active')
-            }
+            client.on('message', (topic, message) => {
+                const parts = message.toString().split(',');
+                const getVal = (i, s) => {
+                    if (i >= parts.length) return 0;
+                    let v = parseFloat(parts[i]);
+                    if (v > 32767) v -= 65536;
+                    return (v / s).toFixed(2);
+                };
 
-            if (topic === 'TailgatedataAnalog') {
-                document.getElementById('up').innerText = getVal(10, 100)
-                document.getElementById('down').innerText = getVal(12, 100)
-            }
-        })
+                // Hàm cập nhật UI cho 1 tổ máy
+                const updateUnit = (id) => {
+                    const p = getVal(0, 1000);
+                    const q = getVal(1, 1000);
+                    const u = getVal(10, 100);
+                    const i = getVal(5, 1);
+                    document.getElementById('p' + id).innerText = p;
+                    document.getElementById('q' + id).innerText = q;
+                    document.getElementById('u' + id).innerText = u;
+                    document.getElementById('i' + id).innerText = i;
+                    
+                    if (parseFloat(u) > 1.0) document.getElementById('led' + id).classList.add('active');
+                    else document.getElementById('led' + id).classList.remove('active');
+                };
+
+                if (topic === 'H1dataAnalog') updateUnit('1');
+                if (topic === 'H2dataAnalog') updateUnit('2');
+                if (topic === 'H3dataAnalog') updateUnit('3');
+
+                if (topic === 'TailgatedataAnalog') {
+                    document.getElementById('up').innerText = getVal(10, 100);
+                    document.getElementById('down').innerText = getVal(12, 100);
+                }
+            });
+        }
     </script>
 </body>
 </html>
