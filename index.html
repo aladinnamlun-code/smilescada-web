@@ -6,93 +6,215 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="logo.png">
-    <title>Smile Scada</title>
+    <title>Sơ đồ Vận hành</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f2f2f7; margin: 0; padding: 10px; display: none; /* Ẩn trước khi nhập pass */ }
-        h2 { text-align: center; color: #0056b3; margin: 10px 0 5px 0; }
-        #status { text-align: center; font-size: 12px; color: #f39c12; margin-bottom: 15px; }
-        .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
-        .dot { width: 12px; height: 12px; background: #ccc; border-radius: 50%; margin-right: 10px; }
-        .dot.active { background: #34c759; box-shadow: 0 0 8px #34c759; }
-        .title { font-weight: bold; font-size: 18px; color: #333; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; }
-        .label { color: #666; }
-        .val { font-weight: bold; color: #222; }
-        .unit { font-size: 12px; color: #999; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #F5F7FA; margin: 0; padding: 10px; display: none; }
+        
+        /* HEADER INFO */
+        .header-box { background: #0056b3; color: white; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-item { text-align: center; }
+        .header-label { font-size: 10px; opacity: 0.8; }
+        .header-val { font-weight: bold; font-size: 14px; }
+
+        /* SLD CONTAINER */
+        .sld-container { display: flex; flex-direction: column; align-items: center; }
+        
+        /* CÁC THÀNH PHẦN VẼ SƠ ĐỒ (CSS PURE) */
+        .line-v { width: 2px; background: #333; height: 20px; margin: 0 auto; }
+        .line-h { height: 4px; background: #333; width: 100%; margin: 10px 0; border-radius: 2px; }
+        
+        /* MÁY CẮT (Hình vuông) */
+        .breaker { width: 40px; height: 40px; border: 2px solid #333; border-radius: 4px; background: #333; margin: 0 auto; cursor: pointer; transition: 0.3s; position: relative; }
+        .breaker::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: white; opacity: 0.2; }
+        .breaker.open { background: #333; } /* Đen */
+        .breaker.close { background: #d32f2f; border-color: #b71c1c; } /* Đỏ */
+        .breaker.lost { opacity: 0.3; }
+
+        /* MÁY BIẾN ÁP (2 vòng tròn lồng nhau) */
+        .trafo { position: relative; width: 50px; height: 80px; margin: 0 auto; }
+        .trafo-circle { width: 40px; height: 40px; border: 2px solid #333; border-radius: 50%; position: absolute; left: 5px; background: #F5F7FA; }
+        .tc-top { top: 0; z-index: 2; }
+        .tc-bottom { bottom: 0; z-index: 1; }
+
+        /* MÁY PHÁT (Hình tròn có dấu ngã) */
+        .gen-icon { 
+            width: 60px; height: 60px; 
+            border: 2px solid #333; border-radius: 50%; 
+            background: #e0e0e0; margin: 10px auto; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px; color: #333; font-weight: bold;
+            transition: 0.5s;
+        }
+        .gen-icon.active { background: #4CD964; border-color: #2e8b57; }
+        
+        /* Hiệu ứng quay */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .rotating { animation: spin 2s linear infinite; }
+
+        /* BỐ CỤC 3 TỔ MÁY */
+        .units-row { display: flex; justify-content: space-between; width: 100%; gap: 5px; }
+        .unit-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+
+        /* BẢNG THÔNG SỐ */
+        .data-table { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; width: 100%; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .d-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px; }
+        .d-lbl { color: #666; font-weight: bold; }
+        .d-val { color: #007AFF; font-weight: bold; }
+        .d-val.hl { color: #FF9500; } /* Highlight Q */
+
+        .label-grid { font-weight: bold; color: #d32f2f; margin-bottom: 5px; }
+        .label-device { font-size: 10px; font-weight: bold; color: #d32f2f; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-    <!-- GIAO DIỆN CHÍNH -->
-    <h2>SMILE SCADA</h2>
-    <div id="status">Đang kết nối Cloud...</div>
-
-    <!-- TỔ MÁY H1 -->
-    <div class="card">
-        <div class="header"><div id="led1" class="dot"></div><div class="title">TỔ MÁY H1</div></div>
-        <div class="row"><span class="label">P</span> <span><span id="p1" class="val">--</span> <span class="unit">MW</span></span></div>
-        <div class="row"><span class="label">Q</span> <span><span id="q1" class="val">--</span> <span class="unit">MVar</span></span></div>
-        <div class="row"><span class="label">U</span> <span><span id="u1" class="val">--</span> <span class="unit">kV</span></span></div>
-        <div class="row"><span class="label">I</span> <span><span id="i1" class="val">--</span> <span class="unit">A</span></span></div>
+    <!-- 1. HEADER (MỰC NƯỚC & TỔNG) -->
+    <div class="header-box">
+        <div class="header-item">
+            <div class="header-label">Thượng lưu</div>
+            <div class="header-val"><span id="up">--</span> m</div>
+        </div>
+        <div class="header-item">
+            <div class="header-label">Tổng P Nhà máy</div>
+            <div class="header-val" style="color: #4CD964; font-size: 18px;"><span id="totalP">0.0</span> MW</div>
+        </div>
+        <div class="header-item">
+            <div class="header-label">Hạ lưu</div>
+            <div class="header-val"><span id="down">--</span> m</div>
+        </div>
     </div>
 
-    <!-- TỔ MÁY H2 -->
-    <div class="card">
-        <div class="header"><div id="led2" class="dot"></div><div class="title">TỔ MÁY H2</div></div>
-        <div class="row"><span class="label">P</span> <span><span id="p2" class="val">--</span> <span class="unit">MW</span></span></div>
-        <div class="row"><span class="label">Q</span> <span><span id="q2" class="val">--</span> <span class="unit">MVar</span></span></div>
-        <div class="row"><span class="label">U</span> <span><span id="u2" class="val">--</span> <span class="unit">kV</span></span></div>
-        <div class="row"><span class="label">I</span> <span><span id="i2" class="val">--</span> <span class="unit">A</span></span></div>
-    </div>
+    <!-- 2. SƠ ĐỒ ĐƠN TUYẾN (CSS DRAWING) -->
+    <div class="sld-container">
+        <!-- LƯỚI 220kV -->
+        <div class="label-grid">220kV GRID</div>
+        <div class="line-v" style="height: 15px;"></div>
+        
+        <!-- MÁY CẮT 271 -->
+        <div style="display:flex; align-items:center;">
+            <div id="cb271" class="breaker lost"></div>
+            <span class="label-device">271</span>
+        </div>
+        
+        <div class="line-v"></div>
+        
+        <!-- MÁY BIẾN ÁP T1 -->
+        <div style="display:flex; align-items:center;">
+            <div class="trafo">
+                <div class="trafo-circle tc-top"></div>
+                <div class="trafo-circle tc-bottom"></div>
+            </div>
+            <span class="label-device">T1</span>
+        </div>
 
-    <!-- TỔ MÁY H3 -->
-    <div class="card">
-        <div class="header"><div id="led3" class="dot"></div><div class="title">TỔ MÁY H3</div></div>
-        <div class="row"><span class="label">P</span> <span><span id="p3" class="val">--</span> <span class="unit">MW</span></span></div>
-        <div class="row"><span class="label">Q</span> <span><span id="q3" class="val">--</span> <span class="unit">MVar</span></span></div>
-        <div class="row"><span class="label">U</span> <span><span id="u3" class="val">--</span> <span class="unit">kV</span></span></div>
-        <div class="row"><span class="label">I</span> <span><span id="i3" class="val">--</span> <span class="unit">A</span></span></div>
-    </div>
+        <div class="line-v" style="height: 15px;"></div>
 
-    <!-- THỦY VĂN -->
-    <div class="card">
-        <div class="header"><div class="title" style="color:#007AFF">THỦY VĂN</div></div>
-        <div class="row"><span class="label">Thượng lưu</span> <span><span id="up" class="val">--</span> <span class="unit">m</span></span></div>
-        <div class="row"><span class="label">Hạ lưu</span> <span><span id="down" class="val">--</span> <span class="unit">m</span></span></div>
+        <!-- THANH CÁI (BUSBAR) -->
+        <div class="line-h"></div>
+
+        <!-- 3 NHÁNH TỔ MÁY -->
+        <div class="units-row">
+            <!-- UNIT 1 -->
+            <div class="unit-col">
+                <div class="line-v"></div>
+                <!-- CB 901 -->
+                <div style="display:flex;">
+                    <div id="cb901" class="breaker lost" style="width:30px; height:30px;"></div>
+                    <span class="label-device">901</span>
+                </div>
+                <div class="line-v"></div>
+                <!-- GEN 1 -->
+                <div style="position:relative;">
+                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G1</span>
+                    <div id="g1" class="gen-icon">~</div>
+                </div>
+                <!-- DATA 1 -->
+                <div class="data-table">
+                    <div class="d-row"><span class="d-lbl">P</span> <span id="p1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Q</span> <span id="q1" class="d-val hl">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">U</span> <span id="u1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">I</span> <span id="i1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">F</span> <span id="f1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi1" class="d-val">0.0</span></div>
+                </div>
+            </div>
+
+            <!-- UNIT 2 -->
+            <div class="unit-col">
+                <div class="line-v"></div>
+                <div style="display:flex;">
+                    <div id="cb902" class="breaker lost" style="width:30px; height:30px;"></div>
+                    <span class="label-device">902</span>
+                </div>
+                <div class="line-v"></div>
+                <div style="position:relative;">
+                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G2</span>
+                    <div id="g2" class="gen-icon">~</div>
+                </div>
+                <div class="data-table">
+                    <div class="d-row"><span class="d-lbl">P</span> <span id="p2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Q</span> <span id="q2" class="d-val hl">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">U</span> <span id="u2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">I</span> <span id="i2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">F</span> <span id="f2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi2" class="d-val">0.0</span></div>
+                </div>
+            </div>
+
+            <!-- UNIT 3 -->
+            <div class="unit-col">
+                <div class="line-v"></div>
+                <div style="display:flex;">
+                    <div id="cb903" class="breaker lost" style="width:30px; height:30px;"></div>
+                    <span class="label-device">903</span>
+                </div>
+                <div class="line-v"></div>
+                <div style="position:relative;">
+                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G3</span>
+                    <div id="g3" class="gen-icon">~</div>
+                </div>
+                <div class="data-table">
+                    <div class="d-row"><span class="d-lbl">P</span> <span id="p3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Q</span> <span id="q3" class="d-val hl">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">U</span> <span id="u3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">I</span> <span id="i3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">F</span> <span id="f3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi3" class="d-val">0.0</span></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- CẤU HÌNH MẬT KHẨU ---
-        const PASSWORD = "@smile"; // Đặt mật khẩu tại đây
-
-        // Kiểm tra mật khẩu (Lưu vào LocalStorage để không phải nhập lại lần sau)
-        const savedPass = localStorage.getItem("scada_pass");
-        if (savedPass === PASSWORD) {
+        // MẬT KHẨU
+        const PASSWORD = "@smile";
+        if (localStorage.getItem("scada_pass") === PASSWORD) {
             document.body.style.display = "block";
-            startMqtt();
+            startApp();
         } else {
-            const input = prompt("Nhập mật khẩu truy cập:");
-            if (input === PASSWORD) {
+            if (prompt("Nhập mật khẩu:") === PASSWORD) {
                 localStorage.setItem("scada_pass", PASSWORD);
                 document.body.style.display = "block";
-                startMqtt();
-            } else {
-                alert("Sai mật khẩu!");
-                window.location.reload(); // Load lại để hỏi tiếp
-            }
+                startApp();
+            } else { alert("Sai mật khẩu"); location.reload(); }
         }
 
-        function startMqtt() {
+        // BIẾN TOÀN CỤC ĐỂ TÍNH TỔNG
+        let p1=0, p2=0, p3=0;
+
+        function startApp() {
             const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
             client.on('connect', () => {
-                document.getElementById('status').innerText = "● Trực tuyến";
-                document.getElementById('status').style.color = "green";
-                client.subscribe('H1dataAnalog');
-                client.subscribe('H2dataAnalog');
-                client.subscribe('H3dataAnalog');
+                console.log("Connected");
+                client.subscribe('H1dataAnalog'); client.subscribe('H1dataDigital');
+                client.subscribe('H2dataAnalog'); client.subscribe('H2dataDigital');
+                client.subscribe('H3dataAnalog'); client.subscribe('H3dataDigital');
+                client.subscribe('SwitchyarddataDigital');
                 client.subscribe('TailgatedataAnalog');
             });
 
@@ -102,31 +224,79 @@
                     if (i >= parts.length) return 0;
                     let v = parseFloat(parts[i]);
                     if (v > 32767) v -= 65536;
-                    return (v / s).toFixed(2);
+                    return v / s;
                 };
 
-                // Hàm cập nhật UI cho 1 tổ máy
-                const updateUnit = (id) => {
-                    const p = getVal(0, 1000);
-                    const q = getVal(1, 1000);
-                    const u = getVal(10, 100);
-                    const i = getVal(5, 1);
-                    document.getElementById('p' + id).innerText = p;
-                    document.getElementById('q' + id).innerText = q;
-                    document.getElementById('u' + id).innerText = u;
-                    document.getElementById('i' + id).innerText = i;
+                // XỬ LÝ ANALOG TỔ MÁY
+                const processUnit = (id, pRef) => {
+                    const p = getVal(0, 1000); 
+                    if(id===1) p1=p; if(id===2) p2=p; if(id===3) p3=p; // Cập nhật biến tổng
                     
-                    if (parseFloat(u) > 1.0) document.getElementById('led' + id).classList.add('active');
-                    else document.getElementById('led' + id).classList.remove('active');
+                    document.getElementById('p'+id).innerText = p.toFixed(1);
+                    document.getElementById('q'+id).innerText = getVal(1, 1000).toFixed(1);
+                    const u = getVal(10, 100);
+                    document.getElementById('u'+id).innerText = u.toFixed(1);
+                    document.getElementById('i'+id).innerText = getVal(5, 1).toFixed(1);
+                    document.getElementById('f'+id).innerText = getVal(3, 100).toFixed(2);
+                    document.getElementById('y'+id).innerText = getVal(14, 10).toFixed(1);
+                    document.getElementById('phi'+id).innerText = getVal(15, 10).toFixed(1);
+
+                    // Animation quay máy phát
+                    const gen = document.getElementById('g'+id);
+                    if (u > 1.0) {
+                        gen.classList.add('active');
+                        gen.classList.add('rotating');
+                    } else {
+                        gen.classList.remove('active');
+                        gen.classList.remove('rotating');
+                    }
+                    
+                    // Cập nhật tổng P
+                    document.getElementById('totalP').innerText = (p1+p2+p3).toFixed(1);
                 };
 
-                if (topic === 'H1dataAnalog') updateUnit('1');
-                if (topic === 'H2dataAnalog') updateUnit('2');
-                if (topic === 'H3dataAnalog') updateUnit('3');
+                // XỬ LÝ DIGITAL (MÁY CẮT)
+                const processBreaker = (id, idxOpen, idxClose) => {
+                    if (parts.length < 42) return;
+                    // Logic: Lấy bit từ chuỗi nhị phân (Đã xử lý ở backend hoặc làm tại đây)
+                    // Ở đây giả định backend gửi chuỗi CSV 0,1,0,1...
+                    const isOpen = parts[idxOpen] == '1';
+                    const isClose = parts[idxClose] == '1';
+                    const cb = document.getElementById(id);
+                    
+                    cb.classList.remove('lost'); // Có mạng -> Hết mờ
+                    if (isClose) {
+                        cb.classList.remove('open');
+                        cb.classList.add('close'); // Đỏ
+                    } else {
+                        cb.classList.remove('close');
+                        cb.classList.add('open'); // Đen
+                    }
+                };
+
+                // ROUTING
+                if (topic === 'H1dataAnalog') processUnit(1);
+                if (topic === 'H2dataAnalog') processUnit(2);
+                if (topic === 'H3dataAnalog') processUnit(3);
+
+                if (topic === 'H1dataDigital') processBreaker('cb901', 41, 40);
+                if (topic === 'H2dataDigital') processBreaker('cb902', 41, 40);
+                if (topic === 'H3dataDigital') processBreaker('cb903', 41, 40);
+
+                if (topic === 'SwitchyarddataDigital') {
+                    // Logic CB 271 (3 pha A,B,C)
+                    if(parts.length > 57) {
+                        const isClose = (parts[55]=='1' && parts[56]=='1' && parts[57]=='1');
+                        const cb = document.getElementById('cb271');
+                        cb.classList.remove('lost');
+                        if(isClose) { cb.classList.add('close'); cb.classList.remove('open'); }
+                        else { cb.classList.add('open'); cb.classList.remove('close'); }
+                    }
+                }
 
                 if (topic === 'TailgatedataAnalog') {
-                    document.getElementById('up').innerText = getVal(10, 100);
-                    document.getElementById('down').innerText = getVal(12, 100);
+                    document.getElementById('up').innerText = getVal(10, 100).toFixed(2);
+                    document.getElementById('down').innerText = getVal(12, 100).toFixed(2);
                 }
             });
         }
