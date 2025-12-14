@@ -11,146 +11,143 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #F5F7FA; margin: 0; padding: 10px; display: none; }
         
-        /* HEADER INFO */
+        /* HEADER */
         .header-box { background: #0056b3; color: white; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .header-item { text-align: center; }
-        .header-label { font-size: 10px; opacity: 0.8; }
         .header-val { font-weight: bold; font-size: 14px; }
 
         /* SLD CONTAINER */
-        .sld-container { display: flex; flex-direction: column; align-items: center; }
+        .sld-container { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; }
         
-        /* CÁC THÀNH PHẦN VẼ SƠ ĐỒ (CSS PURE) */
+        /* ĐƯỜNG DÂY CHUNG */
         .line-v { width: 2px; background: #333; height: 20px; margin: 0 auto; }
-        .line-h { height: 4px; background: #333; width: 100%; margin: 10px 0; border-radius: 2px; }
+        .line-h { height: 4px; background: #333; width: 100%; margin: 0; border-radius: 2px; }
         
-        /* MÁY CẮT (Hình vuông) */
-        .breaker { width: 40px; height: 40px; border: 2px solid #333; border-radius: 4px; background: #333; margin: 0 auto; cursor: pointer; transition: 0.3s; position: relative; }
-        .breaker::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: white; opacity: 0.2; }
-        .breaker.open { background: #333; } /* Đen */
-        .breaker.close { background: #d32f2f; border-color: #b71c1c; } /* Đỏ */
-        .breaker.lost { opacity: 0.3; }
+        /* CĂN GIỮA THIẾT BỊ (Flex Column) */
+        .device-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; }
 
-        /* MÁY BIẾN ÁP (2 vòng tròn lồng nhau) */
-        .trafo { position: relative; width: 50px; height: 80px; margin: 0 auto; }
-        .trafo-circle { width: 40px; height: 40px; border: 2px solid #333; border-radius: 50%; position: absolute; left: 5px; background: #F5F7FA; }
+        /* MÁY CẮT */
+        .breaker-container { display: flex; align-items: center; justify-content: center; position: relative; margin: 5px 0; }
+        .breaker { width: 40px; height: 40px; border: 2px solid #333; border-radius: 4px; background: #333; transition: 0.3s; position: relative; }
+        .breaker::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: white; opacity: 0.2; }
+        .breaker.open { background: #333; } 
+        .breaker.close { background: #d32f2f; border-color: #b71c1c; }
+        .breaker.lost { opacity: 0.3; }
+        .label-device { font-size: 10px; font-weight: bold; color: #d32f2f; position: absolute; left: 45px; white-space: nowrap; }
+
+        /* MÁY BIẾN ÁP */
+        .trafo-container { position: relative; width: 40px; height: 70px; margin: 5px auto; }
+        .trafo-circle { width: 36px; height: 36px; border: 2px solid #333; border-radius: 50%; position: absolute; left: 0; background: #F5F7FA; box-sizing: border-box; }
         .tc-top { top: 0; z-index: 2; }
         .tc-bottom { bottom: 0; z-index: 1; }
+        .label-trafo { position: absolute; left: 45px; top: 25px; font-size: 10px; font-weight: bold; color: #d32f2f; }
 
-        /* MÁY PHÁT (Hình tròn có dấu ngã) */
+        /* MÁY PHÁT */
         .gen-icon { 
-            width: 60px; height: 60px; 
+            width: 50px; height: 50px; 
             border: 2px solid #333; border-radius: 50%; 
-            background: #e0e0e0; margin: 10px auto; 
+            background: #e0e0e0; margin: 5px auto; 
             display: flex; align-items: center; justify-content: center;
-            font-size: 40px; color: #333; font-weight: bold;
+            font-size: 30px; color: #333; font-weight: bold;
             transition: 0.5s;
         }
         .gen-icon.active { background: #4CD964; border-color: #2e8b57; }
-        
-        /* Hiệu ứng quay */
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .rotating { animation: spin 2s linear infinite; }
 
-        /* BỐ CỤC 3 TỔ MÁY */
-        .units-row { display: flex; justify-content: space-between; width: 100%; gap: 5px; }
-        .unit-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
-
+        /* BỐ CỤC 3 TỔ MÁY (SỬA LỖI DÍNH NHAU) */
+        .units-row { display: flex; justify-content: space-between; width: 100%; margin-top: -2px; } /* Margin âm để nối liền line-h */
+        .unit-col { flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 4px; } /* Margin tạo khoảng cách */
+        
         /* BẢNG THÔNG SỐ */
-        .data-table { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 8px; width: 100%; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .d-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 2px; }
+        .data-table { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 5px; width: 100%; box-sizing: border-box; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .d-row { display: flex; justify-content: space-between; margin-bottom: 3px; border-bottom: 1px dashed #eee; }
         .d-lbl { color: #666; font-weight: bold; }
         .d-val { color: #007AFF; font-weight: bold; }
-        .d-val.hl { color: #FF9500; } /* Highlight Q */
+        .d-val.hl { color: #FF9500; }
 
-        .label-grid { font-weight: bold; color: #d32f2f; margin-bottom: 5px; }
-        .label-device { font-size: 10px; font-weight: bold; color: #d32f2f; margin-left: 5px; }
+        .label-grid { font-weight: bold; color: #d32f2f; margin-bottom: 5px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <!-- 1. HEADER (MỰC NƯỚC & TỔNG) -->
+    <!-- HEADER -->
     <div class="header-box">
         <div class="header-item">
-            <div class="header-label">Thượng lưu</div>
+            <div style="font-size:10px">Thượng lưu</div>
             <div class="header-val"><span id="up">--</span> m</div>
         </div>
         <div class="header-item">
-            <div class="header-label">Tổng P Nhà máy</div>
-            <div class="header-val" style="color: #4CD964; font-size: 18px;"><span id="totalP">0.0</span> MW</div>
+            <div style="font-size:10px">Tổng P</div>
+            <div class="header-val" style="color: #4CD964; font-size: 16px;"><span id="totalP">0.0</span> MW</div>
         </div>
         <div class="header-item">
-            <div class="header-label">Hạ lưu</div>
+            <div style="font-size:10px">Hạ lưu</div>
             <div class="header-val"><span id="down">--</span> m</div>
         </div>
     </div>
 
-    <!-- 2. SƠ ĐỒ ĐƠN TUYẾN (CSS DRAWING) -->
+    <!-- SƠ ĐỒ CHÍNH -->
     <div class="sld-container">
-        <!-- LƯỚI 220kV -->
         <div class="label-grid">220kV GRID</div>
         <div class="line-v" style="height: 15px;"></div>
         
-        <!-- MÁY CẮT 271 -->
-        <div style="display:flex; align-items:center;">
+        <!-- CB 271 -->
+        <div class="breaker-container">
             <div id="cb271" class="breaker lost"></div>
             <span class="label-device">271</span>
         </div>
         
         <div class="line-v"></div>
         
-        <!-- MÁY BIẾN ÁP T1 -->
-        <div style="display:flex; align-items:center;">
-            <div class="trafo">
-                <div class="trafo-circle tc-top"></div>
-                <div class="trafo-circle tc-bottom"></div>
-            </div>
-            <span class="label-device">T1</span>
+        <!-- MBA T1 -->
+        <div class="trafo-container">
+            <div class="trafo-circle tc-top"></div>
+            <div class="trafo-circle tc-bottom"></div>
+            <span class="label-trafo">T1</span>
         </div>
 
         <div class="line-v" style="height: 15px;"></div>
 
-        <!-- THANH CÁI (BUSBAR) -->
+        <!-- THANH CÁI -->
         <div class="line-h"></div>
 
-        <!-- 3 NHÁNH TỔ MÁY -->
+        <!-- 3 NHÁNH -->
         <div class="units-row">
-            <!-- UNIT 1 -->
+            <!-- Cột 1 -->
             <div class="unit-col">
                 <div class="line-v"></div>
-                <!-- CB 901 -->
-                <div style="display:flex;">
+                <div class="breaker-container">
                     <div id="cb901" class="breaker lost" style="width:30px; height:30px;"></div>
-                    <span class="label-device">901</span>
+                    <span class="label-device" style="left:35px;">901</span>
                 </div>
                 <div class="line-v"></div>
-                <!-- GEN 1 -->
-                <div style="position:relative;">
-                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G1</span>
+                <div style="position:relative; width:100%; text-align:center;">
+                    <span style="position:absolute; top:0; left:0; font-weight:bold; color:#0056b3; font-size:12px;">G1</span>
                     <div id="g1" class="gen-icon">~</div>
                 </div>
-                <!-- DATA 1 -->
+                <!-- Data -->
                 <div class="data-table">
                     <div class="d-row"><span class="d-lbl">P</span> <span id="p1" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">Q</span> <span id="q1" class="d-val hl">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">U</span> <span id="u1" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">I</span> <span id="i1" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">F</span> <span id="f1" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y1" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y</span> <span id="y1" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ</span> <span id="phi1" class="d-val">0.0</span></div>
                 </div>
             </div>
 
-            <!-- UNIT 2 -->
+            <!-- Cột 2 -->
             <div class="unit-col">
                 <div class="line-v"></div>
-                <div style="display:flex;">
+                <div class="breaker-container">
                     <div id="cb902" class="breaker lost" style="width:30px; height:30px;"></div>
-                    <span class="label-device">902</span>
+                    <span class="label-device" style="left:35px;">902</span>
                 </div>
                 <div class="line-v"></div>
-                <div style="position:relative;">
-                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G2</span>
+                <div style="position:relative; width:100%; text-align:center;">
+                    <span style="position:absolute; top:0; left:0; font-weight:bold; color:#0056b3; font-size:12px;">G2</span>
                     <div id="g2" class="gen-icon">~</div>
                 </div>
                 <div class="data-table">
@@ -159,21 +156,21 @@
                     <div class="d-row"><span class="d-lbl">U</span> <span id="u2" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">I</span> <span id="i2" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">F</span> <span id="f2" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y2" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y</span> <span id="y2" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ</span> <span id="phi2" class="d-val">0.0</span></div>
                 </div>
             </div>
 
-            <!-- UNIT 3 -->
+            <!-- Cột 3 -->
             <div class="unit-col">
                 <div class="line-v"></div>
-                <div style="display:flex;">
+                <div class="breaker-container">
                     <div id="cb903" class="breaker lost" style="width:30px; height:30px;"></div>
-                    <span class="label-device">903</span>
+                    <span class="label-device" style="left:35px;">903</span>
                 </div>
                 <div class="line-v"></div>
-                <div style="position:relative;">
-                    <span style="position:absolute; top:0; left:-15px; font-weight:bold; color:#0056b3;">G3</span>
+                <div style="position:relative; width:100%; text-align:center;">
+                    <span style="position:absolute; top:0; left:0; font-weight:bold; color:#0056b3; font-size:12px;">G3</span>
                     <div id="g3" class="gen-icon">~</div>
                 </div>
                 <div class="data-table">
@@ -182,15 +179,15 @@
                     <div class="d-row"><span class="d-lbl">U</span> <span id="u3" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">I</span> <span id="i3" class="d-val">0.0</span></div>
                     <div class="d-row"><span class="d-lbl">F</span> <span id="f3" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">y%</span> <span id="y3" class="d-val">0.0</span></div>
-                    <div class="d-row"><span class="d-lbl">Φ%</span> <span id="phi3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">y</span> <span id="y3" class="d-val">0.0</span></div>
+                    <div class="d-row"><span class="d-lbl">Φ</span> <span id="phi3" class="d-val">0.0</span></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- CODE JS (Giữ nguyên logic cũ) -->
     <script>
-        // MẬT KHẨU
         const PASSWORD = "@smile";
         if (localStorage.getItem("scada_pass") === PASSWORD) {
             document.body.style.display = "block";
@@ -203,14 +200,12 @@
             } else { alert("Sai mật khẩu"); location.reload(); }
         }
 
-        // BIẾN TOÀN CỤC ĐỂ TÍNH TỔNG
         let p1=0, p2=0, p3=0;
 
         function startApp() {
             const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
             client.on('connect', () => {
-                console.log("Connected");
                 client.subscribe('H1dataAnalog'); client.subscribe('H1dataDigital');
                 client.subscribe('H2dataAnalog'); client.subscribe('H2dataDigital');
                 client.subscribe('H3dataAnalog'); client.subscribe('H3dataDigital');
@@ -227,10 +222,9 @@
                     return v / s;
                 };
 
-                // XỬ LÝ ANALOG TỔ MÁY
-                const processUnit = (id, pRef) => {
+                const processUnit = (id) => {
                     const p = getVal(0, 1000); 
-                    if(id===1) p1=p; if(id===2) p2=p; if(id===3) p3=p; // Cập nhật biến tổng
+                    if(id===1) p1=p; if(id===2) p2=p; if(id===3) p3=p;
                     
                     document.getElementById('p'+id).innerText = p.toFixed(1);
                     document.getElementById('q'+id).innerText = getVal(1, 1000).toFixed(1);
@@ -241,40 +235,22 @@
                     document.getElementById('y'+id).innerText = getVal(14, 10).toFixed(1);
                     document.getElementById('phi'+id).innerText = getVal(15, 10).toFixed(1);
 
-                    // Animation quay máy phát
                     const gen = document.getElementById('g'+id);
-                    if (u > 1.0) {
-                        gen.classList.add('active');
-                        gen.classList.add('rotating');
-                    } else {
-                        gen.classList.remove('active');
-                        gen.classList.remove('rotating');
-                    }
+                    if (u > 1.0) { gen.classList.add('active'); gen.classList.add('rotating'); } 
+                    else { gen.classList.remove('active'); gen.classList.remove('rotating'); }
                     
-                    // Cập nhật tổng P
                     document.getElementById('totalP').innerText = (p1+p2+p3).toFixed(1);
                 };
 
-                // XỬ LÝ DIGITAL (MÁY CẮT)
                 const processBreaker = (id, idxOpen, idxClose) => {
                     if (parts.length < 42) return;
-                    // Logic: Lấy bit từ chuỗi nhị phân (Đã xử lý ở backend hoặc làm tại đây)
-                    // Ở đây giả định backend gửi chuỗi CSV 0,1,0,1...
-                    const isOpen = parts[idxOpen] == '1';
                     const isClose = parts[idxClose] == '1';
                     const cb = document.getElementById(id);
-                    
-                    cb.classList.remove('lost'); // Có mạng -> Hết mờ
-                    if (isClose) {
-                        cb.classList.remove('open');
-                        cb.classList.add('close'); // Đỏ
-                    } else {
-                        cb.classList.remove('close');
-                        cb.classList.add('open'); // Đen
-                    }
+                    cb.classList.remove('lost');
+                    if (isClose) { cb.classList.remove('open'); cb.classList.add('close'); } 
+                    else { cb.classList.remove('close'); cb.classList.add('open'); }
                 };
 
-                // ROUTING
                 if (topic === 'H1dataAnalog') processUnit(1);
                 if (topic === 'H2dataAnalog') processUnit(2);
                 if (topic === 'H3dataAnalog') processUnit(3);
@@ -284,7 +260,6 @@
                 if (topic === 'H3dataDigital') processBreaker('cb903', 41, 40);
 
                 if (topic === 'SwitchyarddataDigital') {
-                    // Logic CB 271 (3 pha A,B,C)
                     if(parts.length > 57) {
                         const isClose = (parts[55]=='1' && parts[56]=='1' && parts[57]=='1');
                         const cb = document.getElementById('cb271');
